@@ -1,0 +1,4 @@
+name: DiscordChatHook
+version: '${project.version}'
+main: dev.codeways.discordchathook.DiscordChatHook
+api-version: '1.21'
