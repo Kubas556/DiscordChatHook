@@ -19,7 +19,7 @@ public class MessageHandler implements Listener {
         _plugin = plugin;
     }
 
-    private void SendDiscordMessage(String msg, String user ) {
+    private void SendDiscordMessage(String msg, Player player) {
         String url = _plugin.getConfig().getString("url");
         boolean debug = _plugin.getConfig().getBoolean("debug");
 
@@ -34,7 +34,8 @@ public class MessageHandler implements Listener {
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString("{\n" +
                         "\t\"content\": \""+msg+"\",\n" +
-                        "\t\"username\": \""+user+"\"\n" +
+                        "\t\"username\": \""+player.getDisplayName()+"\",\n" +
+                        "\t\"avatar_url\": \"https://mc-heads.net/avatar/"+player.getUniqueId()+"\"\n" +
                         "}"))
                 .build();
 
@@ -51,6 +52,6 @@ public class MessageHandler implements Listener {
     @EventHandler
     public void OnPlayerChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
-        SendDiscordMessage(event.getMessage(), player.getDisplayName());
+        SendDiscordMessage(event.getMessage(), player);
     }
 }
