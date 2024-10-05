@@ -33,8 +33,8 @@ public class MessageHandler implements Listener {
                 .uri(URI.create(url))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString("{\n" +
-                        "\t\"content\": \""+msg+"\",\n" +
-                        "\t\"username\": \""+player.getDisplayName()+"\",\n" +
+                        "\t\"content\": \""+escape(msg)+"\",\n" +
+                        "\t\"username\": \""+player.getName()+"\",\n" +
                         "\t\"avatar_url\": \"https://mc-heads.net/avatar/"+player.getUniqueId()+"\"\n" +
                         "}"))
                 .build();
@@ -47,6 +47,31 @@ public class MessageHandler implements Listener {
         } catch (InterruptedException | IOException e) {
             _plugin.getLogger().warning("failed to send message to discord hook");
         }
+    }
+
+    private String escape(String text) {
+
+        StringBuilder builder = new StringBuilder();
+        for (char c: text.toCharArray()) {
+            if (c == '"') {
+                builder.append("\\\"");
+                continue;
+            }
+
+            if(c == '\\') {
+                builder.append("\\\\");
+                continue;
+            }
+
+            if((int)c <= 0x1f) {
+                builder.append(String.format("\\u00%02x", (int)c));
+                continue;
+            }
+
+            builder.append(c);
+        }
+
+        return builder.toString();
     }
 
     @EventHandler
