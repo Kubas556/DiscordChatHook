@@ -22,10 +22,12 @@ public class MessageHandler implements Listener {
     private void SendDiscordMessage(String msg, Player player) {
         String url = _plugin.getConfig().getString("url");
         boolean debug = _plugin.getConfig().getBoolean("debug");
+        boolean usePlayerName = _plugin.getConfig().getBoolean("usePlayerName");
 
         if(url == null || url.isEmpty()) return;
 
         if(debug) {
+            _plugin.getLogger().info("useName: " + usePlayerName + " | avatar: " + "https://mc-heads.net/avatar/"+(usePlayerName ? clearFormatting(player.getName()) : player.getUniqueId()));
             _plugin.getLogger().info("sending " + msg);
         }
 
@@ -34,8 +36,8 @@ public class MessageHandler implements Listener {
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString("{\n" +
                         "\t\"content\": \""+escape(msg)+"\",\n" +
-                        "\t\"username\": \""+player.getName()+"\",\n" +
-                        "\t\"avatar_url\": \"https://mc-heads.net/avatar/"+player.getUniqueId()+"\"\n" +
+                        "\t\"username\": \""+clearFormatting(player.getName())+"\",\n" +
+                        "\t\"avatar_url\": \"https://mc-heads.net/avatar/"+(usePlayerName ? clearFormatting(player.getName()) : player.getUniqueId())+"\"\n" +
                         "}"))
                 .build();
 
@@ -47,6 +49,10 @@ public class MessageHandler implements Listener {
         } catch (InterruptedException | IOException e) {
             _plugin.getLogger().warning("failed to send message to discord hook");
         }
+    }
+
+    private String clearFormatting(String text) {
+        return text.replaceAll("§\\w", "");
     }
 
     private String escape(String text) {
