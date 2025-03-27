@@ -1,3 +1,4 @@
 url:
 debug: false
 usePlayerName: true
+useSkinRestorer: false
