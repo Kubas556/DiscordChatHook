@@ -1,4 +1,6 @@
 url:
+broadcastImageUrl:
+serverImageUrl:
 debug: false
 usePlayerName: true
 useSkinRestorer: false
