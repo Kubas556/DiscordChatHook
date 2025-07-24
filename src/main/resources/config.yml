@@ -1,6 +1,6 @@
 url:
-broadcastImageUrl: https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.13.1/icons/megaphone-fill.svg
-serverImageUrl: https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.13.1/icons/terminal-fill.svg
+broadcastImageUrl: https://cdn.vectorstock.com/i/1000v/43/21/megaphone-icon-vector-21894321.jpg
+serverImageUrl: https://e7.pngegg.com/pngimages/981/872/png-clipart-computer-terminal-computer-icons-linux-console-terminal-emulator-linux-logo-desktop-wallpaper-thumbnail.png
 debug: false
 usePlayerName: true
 useSkinRestorer: false
