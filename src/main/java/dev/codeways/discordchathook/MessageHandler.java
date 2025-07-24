@@ -1,11 +1,5 @@
 package dev.codeways.discordchathook;
 
-import net.skinsrestorer.api.PropertyUtils;
-import net.skinsrestorer.api.SkinsRestorer;
-import net.skinsrestorer.api.SkinsRestorerProvider;
-import net.skinsrestorer.api.exception.DataRequestException;
-import net.skinsrestorer.api.property.SkinProperty;
-import net.skinsrestorer.api.storage.PlayerStorage;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -18,23 +12,25 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class MessageHandler implements Listener {
 
     private final HttpClient _client = HttpClient.newHttpClient();
     private final DiscordChatHook _plugin;
+
+    private final String _postUrl;
+
+    private final boolean _debug;
+
     MessageHandler(DiscordChatHook plugin) {
         _plugin = plugin;
+        _postUrl = _plugin.getConfig().getString("url");
+        _debug = _plugin.getConfig().getBoolean("debug");
     }
 
     private void SendDiscordMessage(String msg, Player player) {
-        String url = _plugin.getConfig().getString("url");
-        if(url == null || url.isEmpty()) return;
+        if(_postUrl == null || _postUrl.isEmpty()) return;
 
-        boolean debug = _plugin.getConfig().getBoolean("debug");
         boolean usePlayerName = _plugin.getConfig().getBoolean("usePlayerName");
         boolean useSkinRestorer = _plugin.getConfig().getBoolean("useSkinRestorer");
         String textureUrl = "https://mc-heads.net/avatar/"+(usePlayerName ? clearFormatting(player.getName()) : player.getUniqueId());
@@ -43,16 +39,15 @@ public class MessageHandler implements Listener {
             textureUrl = SkinRestorerHelper.GetSkinUrl(_plugin, player, textureUrl);
         }
 
-        if(debug) {
+        if(_debug) {
             _plugin.getLogger().info("useName: " + usePlayerName + " | avatar: " + textureUrl);
             _plugin.getLogger().info("sending " + msg);
         }
 
-        SendDiscordMessage(url, msg, player.getName(), textureUrl);
+        SendDiscordMessage(_postUrl, msg, player.getName(), textureUrl);
     }
 
     private void SendDiscordMessage(String url, String msg, String name, String textureUrl) {
-        boolean debug = _plugin.getConfig().getBoolean("debug");
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("Content-Type", "application/json")
@@ -65,7 +60,7 @@ public class MessageHandler implements Listener {
 
         try {
             HttpResponse<String> response = _client.send(request, HttpResponse.BodyHandlers.ofString());
-            if(debug) {
+            if(_debug) {
                 _plugin.getLogger().info(response.statusCode() + " " + response.body());
             }
         } catch (InterruptedException | IOException e) {
@@ -110,21 +105,19 @@ public class MessageHandler implements Listener {
 
     @EventHandler
     public void OnChatBroadcast(BroadcastMessageEvent event) {
-        String url = _plugin.getConfig().getString("url");
         String broadcastImageUrl = _plugin.getConfig().getString("broadcastImageUrl");
-        if(url == null || url.isEmpty()) return;
-        SendDiscordMessage(url, clearFormatting(event.getMessage()), "Broadcast", broadcastImageUrl);
+        if(_postUrl == null || _postUrl.isEmpty()) return;
+
+        SendDiscordMessage(_postUrl, clearFormatting(event.getMessage()), "Broadcast", broadcastImageUrl);
     }
 
     @EventHandler
     public void OnServerCommand(ServerCommandEvent event) {
         if(event.getCommand().startsWith("say")) {
-            String url = _plugin.getConfig().getString("url");
             String broadcastImageUrl = _plugin.getConfig().getString("serverImageUrl");
-            if (url == null || url.isEmpty()) return;
+            if (_postUrl == null || _postUrl.isEmpty()) return;
 
-            SendDiscordMessage(url, clearFormatting(event.getCommand().replaceFirst("say", "")), "Server", broadcastImageUrl);
-            _plugin.getLogger().info("command: " + event.getCommand().replaceFirst("say", ""));
+            SendDiscordMessage(_postUrl, clearFormatting(event.getCommand().replaceFirst("say ", "")), "Server", broadcastImageUrl);
         }
     }
 }

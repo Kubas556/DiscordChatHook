@@ -1,6 +1,6 @@
 url:
-broadcastImageUrl:
-serverImageUrl:
+broadcastImageUrl: https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.13.1/icons/megaphone-fill.svg
+serverImageUrl: https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.13.1/icons/terminal-fill.svg
 debug: false
 usePlayerName: true
 useSkinRestorer: false
