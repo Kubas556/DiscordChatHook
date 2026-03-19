@@ -1,97 +1,68 @@
 package dev.codeways.discordchathook;
 
-import net.skinsrestorer.api.PropertyUtils;
-import net.skinsrestorer.api.SkinsRestorer;
-import net.skinsrestorer.api.SkinsRestorerProvider;
-import net.skinsrestorer.api.exception.DataRequestException;
-import net.skinsrestorer.api.property.SkinProperty;
-import net.skinsrestorer.api.storage.PlayerStorage;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.server.BroadcastMessageEvent;
+import org.bukkit.event.server.ServerCommandEvent;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class MessageHandler implements Listener {
 
     private final HttpClient _client = HttpClient.newHttpClient();
     private final DiscordChatHook _plugin;
+
+    private final String _postUrl;
+
+    private final boolean _debug;
+
     MessageHandler(DiscordChatHook plugin) {
         _plugin = plugin;
+        _postUrl = _plugin.getConfig().getString("url");
+        _debug = _plugin.getConfig().getBoolean("debug");
     }
-    private final Pattern skinIdPattern = Pattern.compile("\\/(\\w+)$");
-
 
     private void SendDiscordMessage(String msg, Player player) {
-        String url = _plugin.getConfig().getString("url");
-        if(url == null || url.isEmpty()) return;
+        if(_postUrl == null || _postUrl.isEmpty()) return;
 
-        boolean debug = _plugin.getConfig().getBoolean("debug");
         boolean usePlayerName = _plugin.getConfig().getBoolean("usePlayerName");
         boolean useSkinRestorer = _plugin.getConfig().getBoolean("useSkinRestorer");
         String textureUrl = "https://mc-heads.net/avatar/"+(usePlayerName ? clearFormatting(player.getName()) : player.getUniqueId());
 
         if(useSkinRestorer) {
-            try {
-                SkinsRestorer skinsRestorerAPI = SkinsRestorerProvider.get();
-                ;
-                PlayerStorage playerStorage = skinsRestorerAPI.getPlayerStorage();
-                try {
-                    Optional<SkinProperty> property = playerStorage.getSkinForPlayer(player.getUniqueId(), player.getName());
-
-                    if (property.isPresent()) {
-                        if (debug) {
-                            _plugin.getLogger().info(property.get().getValue());
-                        }
-                        String skinUrl = PropertyUtils.getSkinTextureUrl(property.get());
-                        if (debug) {
-                            _plugin.getLogger().info(skinUrl);
-                        }
-                        if (!skinUrl.isEmpty()) {
-                            Matcher matcher = skinIdPattern.matcher(skinUrl);
-                            if (matcher.find()) {
-                                String match = matcher.group(1);
-                                if (debug) {
-                                    _plugin.getLogger().info("match: " + match);
-                                }
-                                textureUrl = "https://mc-heads.net/avatar/" + match;
-                            }
-                        }
-                    }
-                } catch (DataRequestException e) {
-                    e.printStackTrace();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            textureUrl = SkinRestorerHelper.GetSkinUrl(_plugin, player, textureUrl);
         }
 
-        if(debug) {
+        if(_debug) {
             _plugin.getLogger().info("useName: " + usePlayerName + " | avatar: " + textureUrl);
             _plugin.getLogger().info("sending " + msg);
         }
 
+        SendDiscordMessage(_postUrl, msg, player.getName(), textureUrl);
+    }
+
+    private void SendDiscordMessage(String url, String msg, String name, String textureUrl) {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString("{\n" +
                         "\t\"content\": \""+escape(msg)+"\",\n" +
-                        "\t\"username\": \""+clearFormatting(player.getName())+"\",\n" +
+                        "\t\"username\": \""+clearFormatting(name)+"\",\n" +
                         "\t\"avatar_url\": \""+textureUrl+"\"\n" +
                         "}"))
                 .build();
 
         try {
             HttpResponse<String> response = _client.send(request, HttpResponse.BodyHandlers.ofString());
-            if(debug) {
+            if(_debug) {
                 _plugin.getLogger().info(response.statusCode() + " " + response.body());
             }
         } catch (InterruptedException | IOException e) {
@@ -132,5 +103,39 @@ public class MessageHandler implements Listener {
     public void OnPlayerChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
         SendDiscordMessage(event.getMessage(), player);
+    }
+
+    @EventHandler
+    public void OnPlayerJoin(PlayerJoinEvent event) {
+        String joinImageUrl = _plugin.getConfig().getString("joinImageUrl");
+        if(_postUrl == null || _postUrl.isEmpty()) return;
+        Player player = event.getPlayer();
+        SendDiscordMessage(_postUrl, "**Joined the server!**", clearFormatting(player.getName()), joinImageUrl);
+    }
+
+    @EventHandler
+    public void OnPlayerQuit(PlayerQuitEvent event) {
+        String leaveImageUrl = _plugin.getConfig().getString("leaveImageUrl");
+        if(_postUrl == null || _postUrl.isEmpty()) return;
+        Player player = event.getPlayer();
+        SendDiscordMessage(_postUrl, "**Left the server!**", clearFormatting(player.getName()), leaveImageUrl);
+    }
+
+    @EventHandler
+    public void OnChatBroadcast(BroadcastMessageEvent event) {
+        String broadcastImageUrl = _plugin.getConfig().getString("broadcastImageUrl");
+        if(_postUrl == null || _postUrl.isEmpty()) return;
+
+        SendDiscordMessage(_postUrl, clearFormatting(event.getMessage()), "Broadcast", broadcastImageUrl);
+    }
+
+    @EventHandler
+    public void OnServerCommand(ServerCommandEvent event) {
+        if(event.getCommand().startsWith("say")) {
+            String broadcastImageUrl = _plugin.getConfig().getString("serverImageUrl");
+            if (_postUrl == null || _postUrl.isEmpty()) return;
+
+            SendDiscordMessage(_postUrl, clearFormatting(event.getCommand().replaceFirst("say ", "")), "Server", broadcastImageUrl);
+        }
     }
 }

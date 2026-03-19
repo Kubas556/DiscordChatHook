@@ -1,4 +1,8 @@
 url:
+broadcastImageUrl: https://cdn.vectorstock.com/i/1000v/43/21/megaphone-icon-vector-21894321.jpg
+joinImageUrl: https://cdn-icons-png.flaticon.com/512/3580/3580148.png
+leaveImageUrl: https://cdn-icons-png.flaticon.com/512/992/992511.png
+serverImageUrl: https://e7.pngegg.com/pngimages/981/872/png-clipart-computer-terminal-computer-icons-linux-console-terminal-emulator-linux-logo-desktop-wallpaper-thumbnail.png
 debug: false
 usePlayerName: true
 useSkinRestorer: false
