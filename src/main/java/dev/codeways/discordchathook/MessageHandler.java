@@ -4,6 +4,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.server.BroadcastMessageEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 
@@ -101,6 +103,22 @@ public class MessageHandler implements Listener {
     public void OnPlayerChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
         SendDiscordMessage(event.getMessage(), player);
+    }
+
+    @EventHandler
+    public void OnPlayerJoin(PlayerJoinEvent event) {
+        String joinImageUrl = _plugin.getConfig().getString("joinImageUrl");
+        if(_postUrl == null || _postUrl.isEmpty()) return;
+        Player player = event.getPlayer();
+        SendDiscordMessage(_postUrl, "**Joined the server!**", clearFormatting(player.getName()), joinImageUrl);
+    }
+
+    @EventHandler
+    public void OnPlayerQuit(PlayerQuitEvent event) {
+        String leaveImageUrl = _plugin.getConfig().getString("leaveImageUrl");
+        if(_postUrl == null || _postUrl.isEmpty()) return;
+        Player player = event.getPlayer();
+        SendDiscordMessage(_postUrl, "**Left the server!**", clearFormatting(player.getName()), leaveImageUrl);
     }
 
     @EventHandler
