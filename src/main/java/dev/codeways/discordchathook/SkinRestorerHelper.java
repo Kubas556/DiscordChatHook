@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import java.util.Optional;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,10 +47,10 @@ public class SkinRestorerHelper {
                     }
                 }
             } catch (DataRequestException e) {
-                e.printStackTrace();
+                plugin.getLogger().log(Level.WARNING, "Failed to fetch skin from SkinRestorer", e);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            plugin.getLogger().log(Level.WARNING, "Failed to resolve SkinRestorer skin URL", e);
         }
         return textureUrl;
     }
